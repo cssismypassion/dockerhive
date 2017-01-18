@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+
+# This file is run locally in order to build the docker container, launch it,
+# mount your code at a given place, and do project-specific housekeeping.
+
+set -euo pipefail
+
+verbose=0
+
+yellow=$(tput setaf 220)
+green=$(tput setaf 118)
+cyan=$(tput setaf 14)
+red=$(tput setaf 160)
+nocolor='\033[0m'
+
+
+function show_help() {
+  echo -e "🐝  ${yellow}welcome to dockerhive${nocolor}"
+  echo
+  echo -e "Dockerhive builds, launches, and initializes the docker environment for your"
+  echo -e "project. After execution, check ${cyan}docker ps -a${nocolor} if you'd like to check that your"
+  echo -e "containers are running as expected."
+  echo
+  echo -e "usage: $0 [--verbose] [--help]"
+  echo
+}
+
+function show_intro() {
+  echo
+  echo -e "${yellow}🐝  Buzzy bees are setting up your project!${nocolor}"
+  echo
+}
+
+function task() {
+  printf " %-30s${nocolor}" "$1"
+  shift
+
+  if [ $verbose -eq 1 ] ; then
+    eval "$@"
+  fi
+
+  if [ $verbose -eq 0 ] ; then
+    eval "$@ > /dev/null 2>&1"
+    echo -e " ${green}✓${nocolor}"
+  fi
+}
+
+function show_outro() {
+  echo
+  echo -e "Your project setup is ready.${nocolor}"
+  echo
+  bin/help
+}
+
+
+# "Easy way" to check if the docker process is running since `docker info`
+# requires Docker to be active, yet at the same time when Docker is launched
+# it adds too many long-named processes to the list to check for one
+# in particular.
+{
+  set +e
+  docker info > /dev/null 2>&1
+  docker_status=$?
+  set -e
+} > /dev/null 2>&1
+
+if [ $docker_status -ne 0 ] ; then
+  echo
+  echo -e "🐝  ${yellow}welcome to dockerhive${nocolor}"
+  echo
+  echo -e "${red}[error]${nocolor} Docker must be running on your system."
+  echo -e "Please start Docker and then try to run ${cyan}$0${nocolor} again."
+  echo
+
+  exit 1
+fi
+
+# avoid checking $1 if there are no arguments to prevent
+# exiting due to an unbound $1 variable
+if [ $# -ne 0 ] ; then
+  while :; do
+    case $1 in
+      -h|-\?|--help)
+        show_help
+        exit 0
+        ;;
+      -v|--verbose)
+        verbose=1
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        break
+    esac
+
+    shift
+
+    # avoid checking $1 if there are no further arguments to prevent
+    # exiting due to an unbound $1 variable
+    if [ $# -eq 0 ] ; then
+      break
+    fi
+  done
+fi
+
+show_intro
+
+task "Building image" docker-compose build
+task "Bringing up app" docker-compose up -d
+task "Initializing environment" docker-compose exec web bin/init
+
+show_outro

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+green=$(tput setaf 118)
+cyan=$(tput setaf 14)
+nocolor='\033[0m'
+
+echo
+echo -e "${green}Here are some helpful commands to get you started.${nocolor}"
+echo
+echo -e "> ${cyan}bin/help${nocolor} => Show this command cheatsheet"
+
+# Add your own project-specific commands here. Use the same format.
+# The commands will be printed out upon initial project setup and
+# additionally when bin/help is run.
+
+# echo -e " > ${cyan}bin/mycommand arg1 arg2${nocolor} => Command does something"
+
+
+echo

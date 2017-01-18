@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+echo "This script will stop all running docker containers and remove them. Continue?"
+select yn in "Yes" "No"; do
+    case $yn in
+        Yes ) docker stop $(docker ps -a -q) && docker rm $(docker ps -a -q); break;;
+        No ) exit;;
+    esac
+done
